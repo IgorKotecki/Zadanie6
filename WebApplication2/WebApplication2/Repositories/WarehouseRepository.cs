@@ -7,6 +7,10 @@ public interface IWarehouseRepository
 {
     public Task<int?> RegisterProductInWarehouseAsync(int idWarehouse, int idProduct, int idOrder, DateTime createdAt);
     public Task RegisterProductInWarehouseByProcedureAsync(int idWarehouse, int idProduct, DateTime createdAt);
+    Task<bool> CheckIfProductExists(int dtoIdProduct);
+    Task<bool> CheckIfWarehouseExists(int dtoIdWarehouse);
+    Task<bool> CheckIfOrderExists(int dtoIdProduct,int dtoAmount);
+    Task<bool> CheckIfOrderCompleted(int dtoIdProduct, int dtoIdWarehouse,int dtoAmount);
 }
 
 public class WarehouseRepository : IWarehouseRepository
@@ -16,7 +20,98 @@ public class WarehouseRepository : IWarehouseRepository
     {
         _configuration = configuration;
     }
-    
+
+    public async Task<bool> CheckIfProductExists(int dtoIdProduct)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        
+        await using var transaction = await connection.BeginTransactionAsync();
+        try
+        {
+            var query = "SELECT TOP 1 IdProduct FROM Product WHERE @idProduct = IdProduct";
+            await using var cmd = new SqlCommand(query, connection);
+            cmd.Transaction = (SqlTransaction)transaction;
+            cmd.Parameters.AddWithValue("@idProduct", dtoIdProduct);
+            var result = await cmd.ExecuteNonQueryAsync();
+
+            return result != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> CheckIfWarehouseExists(int dtoIdWarehouse)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        
+        await using var transaction = await connection.BeginTransactionAsync();
+        try
+        {
+            var query = "SELECT TOP 1 IdWarehouse FROM Warehouse WHERE @idWarehouse = IdWarehouse";
+            await using var cmd = new SqlCommand(query, connection);
+            cmd.Transaction = (SqlTransaction)transaction;
+            cmd.Parameters.AddWithValue("@idWarehouse", dtoIdWarehouse);
+            var result = await cmd.ExecuteNonQueryAsync();
+
+            return result != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> CheckIfOrderExists(int dtoIdProduct, int dtoAmount)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        
+        await using var transaction = await connection.BeginTransactionAsync();
+        try
+        {
+            var query = "SELECT TOP 1 IdProduct FROM Order WHERE @idProduct = IdProduct AND @Amount = Amount";
+            await using var cmd = new SqlCommand(query, connection);
+            cmd.Transaction = (SqlTransaction)transaction;
+            cmd.Parameters.AddWithValue("@idProduct", dtoIdProduct);
+            cmd.Parameters.AddWithValue("@Amount", dtoAmount);
+            var result = await cmd.ExecuteNonQueryAsync();
+
+            return result != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> CheckIfOrderCompleted(int dtoIdProduct, int dtoIdWarehouse,int dtoAmount)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        
+        await using var transaction = await connection.BeginTransactionAsync();
+        try
+        {
+            var query = "SELECT TOP 1 IdOrder FROM Product_Warehouse WHERE @idProduct = IdProduct AND @Amount = Amount AND @idWarehouse = IdWarehouse";
+            await using var cmd = new SqlCommand(query, connection);
+            cmd.Transaction = (SqlTransaction)transaction;
+            cmd.Parameters.AddWithValue("@idProduct", dtoIdProduct);
+            cmd.Parameters.AddWithValue("@Amount", dtoAmount);
+            cmd.Parameters.AddWithValue("@idWarehouse", dtoIdWarehouse);
+            var result = await cmd.ExecuteNonQueryAsync();
+
+            return result != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<int?> RegisterProductInWarehouseAsync(int idWarehouse, int idProduct, int idOrder, DateTime createdAt)
     {
         await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);

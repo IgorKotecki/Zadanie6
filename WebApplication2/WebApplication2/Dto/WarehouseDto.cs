@@ -12,4 +12,7 @@ public class RegisterProductInWarehouseRequestDTO
     
     [Required]
     public DateTime? CreatedAt { get; set; }
+
+    [Required] 
+    public int? Amount { get; set; }
 }

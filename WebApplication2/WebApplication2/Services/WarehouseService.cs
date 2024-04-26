@@ -1,4 +1,6 @@
-﻿using WebApplication2.Dto;
+﻿using System.ComponentModel.DataAnnotations;
+using WebApplication2.Dto;
+using WebApplication2.Exceptions;
 using WebApplication2.Repositories;
 
 namespace WebApplication2.Services;
@@ -11,6 +13,7 @@ public interface IWarehouseService
 public class WarehouseService : IWarehouseService
 {
     private readonly IWarehouseRepository _warehouseRepository;
+    
     public WarehouseService(IWarehouseRepository warehouseRepository)
     {
         _warehouseRepository = warehouseRepository;
@@ -18,12 +21,25 @@ public class WarehouseService : IWarehouseService
     
     public async Task<int> RegisterProductInWarehouseAsync(RegisterProductInWarehouseRequestDTO dto)
     {
-        // Example Flow:
-        // check if product exists else throw NotFoundException
-        // check if warehouse exists else throw NotFoundException
-        // get order if exists else throw NotFoundException
+        var productExists = await _warehouseRepository.CheckIfProductExists(dto.IdProduct.Value);
+        if (!productExists)
+            throw new NotFoundException("Product with the provided identifier does not exist.");
+        
+        var warehouseExists = await _warehouseRepository.CheckIfWarehouseExists(dto.IdWarehouse.Value);
+        if (!warehouseExists)
+            throw new NotFoundException("Warehouse with the provided identifier does not exist.");
+        
+        if (dto.Amount <= 0)
+            throw new ValidationException("Amount must be greater than 0.");
+
+        var orderExists = await _warehouseRepository.CheckIfOrderExists(dto.IdProduct.Value, dto.Amount.Value);
+        if (!orderExists)
+            throw new NotFoundException("Order with the provided identifier does not exist.");
+
+        var chceckIfInProductWarehouse =
+            await _warehouseRepository.CheckIfOrderCompleted(dto.IdProduct.Value, dto.IdWarehouse.Value,
+                dto.Amount.Value);
         const int idOrder = 1;
-        // check if product is already in warehouse else throw ConflictException
 
         var idProductWarehouse = await _warehouseRepository.RegisterProductInWarehouseAsync(
             idWarehouse: dto.IdWarehouse!.Value,
