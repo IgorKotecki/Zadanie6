@@ -25,20 +25,23 @@ public class WarehouseService : IWarehouseService
         if (!productExists)
             throw new NotFoundException("Product with the provided identifier does not exist.");
         
-        var warehouseExists = await _warehouseRepository.CheckIfWarehouseExists(dto.IdWarehouse.Value);
+        var warehouseExists = await _warehouseRepository.CheckIfWarehouseExists(dtoIdWarehouse: dto.IdWarehouse.Value);
         if (!warehouseExists)
             throw new NotFoundException("Warehouse with the provided identifier does not exist.");
         
         if (dto.Amount <= 0)
             throw new ValidationException("Amount must be greater than 0.");
 
-        var orderExists = await _warehouseRepository.CheckIfOrderExists(dto.IdProduct.Value, dto.Amount.Value);
+        var orderExists = await _warehouseRepository.CheckIfOrderExists(dtoIdProduct:dto.IdProduct.Value,dtoAmount: dto.Amount.Value);
         if (!orderExists)
             throw new NotFoundException("Order with the provided identifier does not exist.");
 
         var chceckIfInProductWarehouse =
-            await _warehouseRepository.CheckIfOrderCompleted(dto.IdProduct.Value, dto.IdWarehouse.Value,
-                dto.Amount.Value);
+            await _warehouseRepository.CheckIfOrderCompleted(dtoIdProduct:dto.IdProduct.Value, dtoIdWarehouse: dto.IdWarehouse.Value,
+                dtoAmount:dto.Amount.Value);
+        if (chceckIfInProductWarehouse)
+            throw new NotFoundException("Order with procided identifier already exists");
+        
         const int idOrder = 1;
 
         var idProductWarehouse = await _warehouseRepository.RegisterProductInWarehouseAsync(
